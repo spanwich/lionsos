@@ -9,7 +9,7 @@ $(error MICROKIT_SDK must be specified)
 endif
 override MICROKIT_SDK := $(abspath ${MICROKIT_SDK})
 
-export MICROKIT_CONFIG ?= debug
+export MICROKIT_CONFIG ?= smp-debug
 export BUILD_DIR ?= $(abspath build)
 export MICROKIT_BOARD ?= qemu_virt_aarch64
 export SHELL_SRC_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))

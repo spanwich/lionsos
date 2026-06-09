@@ -8,7 +8,10 @@ IMAGES := \
 	serial_driver.elf \
 	serial_virt_rx.elf \
 	serial_virt_tx.elf \
-	shell.elf
+	shell0.elf \
+	shell1.elf \
+	shell2.elf \
+	shell3.elf
 
 SUPPORTED_BOARDS := \
 	qemu_virt_aarch64
@@ -52,7 +55,10 @@ $(SYSTEM_FILE): $(METAPROGRAM) $(IMAGES) $(DTB)
 	$(OBJCOPY) --update-section .serial_driver_config=serial_driver_config.data serial_driver.elf
 	$(OBJCOPY) --update-section .serial_virt_tx_config=serial_virt_tx.data serial_virt_tx.elf
 	$(OBJCOPY) --update-section .serial_virt_rx_config=serial_virt_rx.data serial_virt_rx.elf
-	$(OBJCOPY) --update-section .serial_client_config=serial_client_shell.data shell.elf
+	$(OBJCOPY) --update-section .serial_client_config=serial_client_shell0.data shell0.elf
+	$(OBJCOPY) --update-section .serial_client_config=serial_client_shell1.data shell1.elf
+	$(OBJCOPY) --update-section .serial_client_config=serial_client_shell2.data shell2.elf
+	$(OBJCOPY) --update-section .serial_client_config=serial_client_shell3.data shell3.elf
 	touch $@
 
 $(IMAGE_FILE) $(REPORT_FILE): $(IMAGES) $(SYSTEM_FILE)
@@ -61,6 +67,7 @@ $(IMAGE_FILE) $(REPORT_FILE): $(IMAGES) $(SYSTEM_FILE)
 qemu: $(IMAGE_FILE)
 	$(QEMU) -machine virt,virtualization=on \
 		-cpu cortex-a53 \
+		$(if $(findstring smp,$(MICROKIT_CONFIG)),-smp 4,) \
 		-serial mon:stdio \
 		-device loader,file=$(IMAGE_FILE),addr=0x70000000,cpu-num=0 \
 		-m size=2G \

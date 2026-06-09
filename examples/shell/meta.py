@@ -10,21 +10,38 @@ from sdfgen import DeviceTree, Sddf, SystemDescription
 assert version("sdfgen").split(".")[1] == "28", "Unexpected sdfgen version"
 
 ProtectionDomain = SystemDescription.ProtectionDomain
+Channel = SystemDescription.Channel
 
 
 def generate(sdf_path: str, output_dir: str, dtb: DeviceTree):
     serial_node = dtb.node(board.serial)
     assert serial_node is not None
 
-    serial_driver = ProtectionDomain("serial_driver", "serial_driver.elf", priority=100)
-    serial_virt_tx = ProtectionDomain("serial_virt_tx", "serial_virt_tx.elf", priority=99)
-    serial_virt_rx = ProtectionDomain("serial_virt_rx", "serial_virt_rx.elf", priority=99)
+    serial_driver = ProtectionDomain("serial_driver", "serial_driver.elf", priority=100, cpu=0)
+    serial_virt_tx = ProtectionDomain("serial_virt_tx", "serial_virt_tx.elf", priority=99, cpu=0)
+    serial_virt_rx = ProtectionDomain("serial_virt_rx", "serial_virt_rx.elf", priority=99, cpu=0)
     serial_system = Sddf.Serial(sdf, serial_node, serial_driver, serial_virt_tx, virt_rx=serial_virt_rx)
 
-    shell = ProtectionDomain("shell", "shell.elf", priority=1, budget=20000, stack_size=0x4000)
-    serial_system.add_client(shell)
+    shells = [
+        ProtectionDomain(
+            f"shell{core}",
+            f"shell{core}.elf",
+            priority=1 + core,
+            budget=20000,
+            stack_size=0x4000,
+            cpu=core,
+        )
+        for core in range(4)
+    ]
 
-    for pd in [serial_driver, serial_virt_tx, serial_virt_rx, shell]:
+    for shell in shells:
+        serial_system.add_client(shell)
+
+    for core in range(1, 4):
+        sdf.add_channel(Channel(shells[0], shells[core], a_id=20 + core, b_id=20, pp_a=True))
+        sdf.add_channel(Channel(shells[0], shells[core], a_id=30 + core, b_id=30 + core))
+
+    for pd in [serial_driver, serial_virt_tx, serial_virt_rx] + shells:
         sdf.add_pd(pd)
 
     assert serial_system.connect()
