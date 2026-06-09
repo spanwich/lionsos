@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright 2026, UNSW
+
+    SPDX-License-Identifier: BSD-2-Clause
+-->
+<system>
+    <protection_domain name="hello_x86" priority="1">
+        <program_image path="hello.elf" />
+    </protection_domain>
+</system>
